@@ -32,15 +32,21 @@ Do not let them escape the loop.
 
     const data = await completion.json();
 
-    if (!data.choices || !data.choices[0]) {
-      console.error("OpenAI API error:", data);
-      return NextResponse.json({ reply: '⚠️ No valid response from OpenAI.' }, { status: 500 });
+    // 🟠 DEBUG: If OpenAI returns an error
+    if (data.error) {
+      return NextResponse.json({ reply: `⚠️ OpenAI error: ${data.error.message}` }, { status: 500 });
     }
 
+    // 🟠 DEBUG: If no valid reply
+    if (!data.choices || !data.choices[0]?.message?.content) {
+      return NextResponse.json({ reply: `⚠️ No valid reply. Raw data: ${JSON.stringify(data)}` }, { status: 500 });
+    }
+
+    // ✅ Success
     return NextResponse.json({ reply: data.choices[0].message.content });
 
-  } catch (err) {
-    console.error("Internal error:", err);
-    return NextResponse.json({ reply: '⚠️ Internal error occurred.' }, { status: 500 });
+  } catch (err: any) {
+    console.error("💥 Caught error:", err);
+    return NextResponse.json({ reply: `⚠️ Internal error: ${err.message}` }, { status: 500 });
   }
 }
